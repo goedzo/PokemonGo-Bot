@@ -809,6 +809,10 @@ class PokemonGoBot(object):
 
 
     def tick(self):
+        #Testing if we are still tick
+        self.logger = logging.getLogger('info')
+        self.logger.info('Heartbeat Reset')
+
         self.health_record.heartbeat()
         self.cell = self.get_meta_cell()
 
@@ -831,6 +835,7 @@ class PokemonGoBot(object):
         self.check_session(self.position)
 
         for worker in self.workers:
+            self.logger.info("Heartbeat Calling %s" % type(worker).__name__ )
             if worker.work() == WorkerResult.RUNNING:
                 return
 
