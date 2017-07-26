@@ -121,6 +121,7 @@ class PokemonCatchWorker(BaseTask):
     ############################################################################
 
     def work(self, response_dict=None):
+        self.logger.info("Catch worker has started")
         response_dict = response_dict or self.create_encounter_api_call()
 
         # validate response
@@ -217,6 +218,7 @@ class PokemonCatchWorker(BaseTask):
 
 
         while True:
+            self.logger.info("In catch worker line 221. Catching pokemon")
             if result[0] < self.daily_catch_limit:
             # catch that pokemon!
                 encounter_id = self.pokemon['encounter_id']
@@ -508,6 +510,7 @@ class PokemonCatchWorker(BaseTask):
             print "Pokemon Level: " + str(pokemon.level) + " Berries count: " + str(berry_count) + " Berries ID: " + str(berry_id) + " Catch rate: " + str(ideal_catch_rate_before_throw)
         
         while True:
+            self.logger.info("In catch worker line 513. Catching pokemon")
 
             # find lowest available ball
             current_ball = ITEM_POKEBALL
@@ -619,6 +622,7 @@ class PokemonCatchWorker(BaseTask):
             try:
                 catch_pokemon_status = response_dict['responses']['CATCH_POKEMON']['status']
             except KeyError:
+                self.logger.info("In catch worker line 625. Catch error")
                 break
 
             # retry failed pokemon
@@ -635,8 +639,8 @@ class PokemonCatchWorker(BaseTask):
                 # randomly chooses a number of times to 'show' wobble animation between 1 and flee_count
                 # multiplies this by flee_duration to get total sleep
                 if self.catchsim_flee_count:
+                    self.logger.info("In catch worker line 642. Flee count. Sleeping")
                     sleep((randrange(self.catchsim_flee_count)+1) * self.catchsim_flee_duration)
-
                 continue
 
             # abandon if pokemon vanished
@@ -648,6 +652,7 @@ class PokemonCatchWorker(BaseTask):
                 result = c.fetchone()
 
                 while True:
+                    self.logger.info("In catch worker line 655. Inserting into DB")
                     if result[0] == 1:
                         conn.execute('''INSERT INTO vanish_log (pokemon, cp, iv, encounter_id, pokemon_id) VALUES (?, ?, ?, ?, ?)''', (pokemon.name, pokemon.cp, pokemon.iv, str(encounter_id), pokemon.pokemon_id))
                     break
@@ -680,6 +685,7 @@ class PokemonCatchWorker(BaseTask):
                 self.consecutive_vanishes_so_far = result[0]
 
                 if self.rest_completed == False and self.consecutive_vanishes_so_far >= self.consecutive_vanish_limit:
+                    self.logger.info("In catch worker line 688. Starting Rest")
                     self.start_rest()
 
                 if self._pct(catch_rate_by_ball[current_ball]) == 100:
@@ -772,8 +778,10 @@ class PokemonCatchWorker(BaseTask):
                     result = c.fetchone()
 
                     while True:
+                        self.logger.info("In catch worker line 781. Inserting into catch log")
                         if result[0] == 1:
                             conn.execute('''INSERT INTO catch_log (pokemon, cp, iv, encounter_id, pokemon_id) VALUES (?, ?, ?, ?, ?)''', (pokemon.name, pokemon.cp, pokemon.iv, str(encounter_id), pokemon.pokemon_id))
+                        self.logger.info("In catch worker line 784. Inserted")
                         break
                     else:
                         self.emit_event(
@@ -783,6 +791,7 @@ class PokemonCatchWorker(BaseTask):
                             formatted="catch_log table not found, skipping log"
                         )
                         break
+                    self.logger.info("In catch worker line 794. Writing json")
                     user_data_caught = os.path.join(_base_dir, 'data', 'caught-%s.json' % self.bot.config.username)
                     with open(user_data_caught, 'ab') as outfile:
                         json.dump(OrderedDict({
@@ -799,7 +808,9 @@ class PokemonCatchWorker(BaseTask):
 
                     # if it is a new pokemon to our dex, simulate app animation delay
                     if exp_gain >= 500:
+                        self.logger.info("In catch worker line 811. Going to sleep for animation")
                         sleep (randrange(self.catchsim_newtodex_wait_min, self.catchsim_newtodex_wait_max))
+                        self.logger.info("In catch worker line 813. Continue")
 
                 except IOError as e:
                     self.logger.info('[x] Error while opening location file: %s' % e)
@@ -811,7 +822,9 @@ class PokemonCatchWorker(BaseTask):
                     data={'pokemon': pokemon.name}
                 )
                 # Take some time to throw the ball from config options
+                self.logger.info("In catch worker line 825. Before action delay")
                 action_delay(self.catchsim_catch_wait_min, self.catchsim_catch_wait_max)
+                self.logger.info("In catch worker line 827. Continue")
                 continue
 
             break
