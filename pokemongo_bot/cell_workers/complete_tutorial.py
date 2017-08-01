@@ -113,7 +113,7 @@ class CompleteTutorial(BaseTask):
     def _random_avatar(self):
         avatar= {}
         # 0 = Male, 1 = Female
-        avatar['gender']=random.randint(0,1)
+        avatar['avatar']=random.randint(0,1)
         # What is the max value of each parameter ?
         # Default is 0, anyway human player will stop
         # at the first choices in general, so fully
